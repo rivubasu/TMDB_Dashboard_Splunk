@@ -1,0 +1,122 @@
+<form version="1.1" theme="dark" script="multinput.js" stylesheet="timepicker.css">
+  <label>TMDB_FIRST_DASHBOARD</label>
+  <search id="base_search">
+    <query>index="tmdb_index"| table
+      id,release_date,title,genre_ids{},original_language,original_title,overview,popularity|
+      mvexpand genre_ids{} | rename genre_ids{} as genre_id| eval release_date_epoc=
+      strptime(release_date,"%Y-%m-%d")| eval release_year = strftime(release_date_epoc,"%Y")|
+      fillnull value="Not Defined" release_year,genre_id,original_language</query>
+    <earliest>$time.earliest$</earliest>
+    <latest>$time.latest$</latest>
+  </search>
+  <fieldset submitButton="true" autoRun="true">
+    <input id="multi1" type="multiselect" token="release_year" searchWhenChanged="false">
+      <label>Release Year</label>
+      <choice value="*">All</choice>
+      <search base="base_search">
+        <query>|stats count by release_year</query>
+      </search>
+      <default>*</default>
+      <initialValue>*</initialValue>
+      <fieldForLabel>release_year</fieldForLabel>
+      <fieldForValue>release_year</fieldForValue>
+      <valuePrefix>release_year = "</valuePrefix>
+      <valueSuffix>"</valueSuffix>
+      <delimiter> OR </delimiter>
+    </input>
+    <input type="dropdown" token="genre_id" searchWhenChanged="false">
+      <label>Genre Id</label>
+      <choice value="*">All</choice>
+      <search base="base_search">
+        <query>|stats count by genre_id</query>
+      </search>
+      <default>*</default>
+      <initialValue>*</initialValue>
+      <fieldForLabel>genre_id</fieldForLabel>
+      <fieldForValue>genre_id</fieldForValue>
+    </input>
+    <input type="dropdown" token="original_language" searchWhenChanged="false">
+      <label>Original Language</label>
+      <choice value="*">All</choice>
+      <search base="base_search">
+        <query>|stats count by original_language</query>
+      </search>
+      <default>*</default>
+      <initialValue>*</initialValue>
+      <fieldForLabel>original_language</fieldForLabel>
+      <fieldForValue>original_language</fieldForValue>
+    </input>
+    <input type="time" token="time" searchWhenChanged="false">
+      <label>Time Picker</label>
+      <default>
+        <earliest>-7d@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+  </fieldset>
+  <row>
+    <panel>
+      <single>
+        <title>Total Movies</title>
+        <search base="base_search">
+          <query>search $release_year$ genre_id=$genre_id$ original_language=$original_language$ |
+            dedup id |stats count</query>
+        </search>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="rangeColors">["0x53a051","0x1182f3"]</option>
+        <option name="rangeValues">[10]</option>
+        <option name="underLabel">Total Movies</option>
+        <option name="useColors">1</option>
+      </single>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <chart>
+        <title>Year wise breakup</title>
+        <search base="base_search">
+          <query>search $release_year$ genre_id=$genre_id$ original_language=$original_language$ |
+            dedup id
+            | stats count by release_year</query>
+        </search>
+        <option name="charting.chart">pie</option>
+        <option name="charting.drilldown">none</option>
+      </chart>
+    </panel>
+    <panel>
+      <chart>
+        <title>Language wise breakup</title>
+        <search base="base_search">
+          <query>search $release_year$ genre_id=$genre_id$ original_language=$original_language$ |
+            dedup id
+            | stats count by original_language</query>
+        </search>
+        <option name="charting.chart">pie</option>
+        <option name="charting.drilldown">none</option>
+      </chart>
+    </panel>
+    <panel>
+      <chart>
+        <title>Genre wise breakup</title>
+        <search base="base_search">
+          <query>search $release_year$ genre_id=$genre_id$ original_language=$original_language$|
+            stats count by genre_id</query>
+        </search>
+        <option name="charting.chart">pie</option>
+        <option name="charting.drilldown">none</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <table>
+        <title>Movie Details</title>
+        <search base="base_search">
+          <query>search $release_year$ genre_id=$genre_id$ original_language=$original_language$</query>
+        </search>
+        <option name="drilldown">none</option>
+      </table>
+    </panel>
+  </row>
+</form>
