@@ -1,0 +1,5 @@
+div[data-test^="real-time-column"]{
+  display: none;
+}
+
+/* for any div that starts with real-time-column do not display it */
